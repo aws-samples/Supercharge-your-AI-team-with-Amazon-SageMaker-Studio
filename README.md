@@ -54,7 +54,14 @@ Here's a concise overview of the process:
 
 ## Installation
 
-- Run command to compile, synthesize and deploy the application. Please adjust the account, user and password for the application. Password should be at least 8 characters, with upper case characters and numbers. User parameter is the Sagemaker domain user that will be authenticated by Cognito.
+- Bootstrap your AWS Account. Please adjust the account number and region (we use eu-central-1 here), as required
+
+  ```terminal
+    cdk bootstrap aws://11111111111/eu-central-1
+  ```
+
+- Run command to compile, synthesize and deploy the application. Please adjust the account, domain-name, user and password for the application. Password should be at least 8 characters, with upper case characters and numbers. User parameter is the Sagemaker domain user that will be authenticated by Cognito. Please note that the domain-name also determines the name of S3 bucket created by the deployment. So, it is important to have a unique domain-name. If not, cdk deployment will complain about S3 bucket name created in the course of deployment
+
 
   ```terminal
     npm install
@@ -92,11 +99,11 @@ Here's a concise overview of the process:
 
     - _domainName_: Set this to the domain-name paramter you passed in cdk deploy domain-name parameter for example 'team1'
     - _client-id_: This is the Cognito client ID. Fetch this from the output during cdk deploy.
-    - _client-secret_: To get Cognito client secret. Fetch this from output of cdk output as well.
-    - _sagemaker-presigned-api_: This is the URL of the API gateway created by the cdk which generates the pre-signed-url.
-    - _cognito-signin-endpoint_: This is the endpoint URL of the Cognito Domain where the client app (in this case Postman) authenticates by providing credentials of the user ('demo-user'). The CDK app generates a globally unique cognito domain using the convention **sagemaker-login-<your account id>**
+    - _client-secret_: To get Cognito client secret. Fetch this from output of cdk output.
+    - _sagemaker-presigned-api_: This is the URL of the API gateway created by the cdk which generates the pre-signed-url. Fetch this from output of cdk output as well.
+    - _cognito-signin-endpoint_: This is the endpoint URL of the Cognito Domain where the client app (in this case Postman) authenticates by providing credentials of the user ('demo-user'). Fetch this from output of cdk output. The CDK app generates a globally unique cognito domain using the convention **sagemaker-login-<your account id>**
 
-  - In Postman click on Collections -> Sagemaker and select the `Authorization` tab. All the values in this tab should be prefilled already. On the top right corner select the environment 'Sagemaker' that was populated earlier. You only need to select this envionment and click on `Get New Access Token`.
+  - In Postman click on Collections -> Sagemaker and select the `Authorization` tab. All the values in this tab should be prefilled already. On the top right corner select the environment 'Sagemaker' that was populated earlier (it is quite possible, No Environment is selected by default).  Scroll down in the page and click on 'Get New Access Token'.
   - This opens up a pop-up window where you can login into Cognito with the user name and password which you used in cdk deploy step and passed as parameters.
   - Upon successful authentication a new access token is generated. Select `Use Token`
   - Now click on `GeneratePresignedUrlDemo` in the Postman Sagemaker collections and click on `Send`. Make sure you selected the right envionment (Sagemaker) on the top right corner from the dropdown list.
