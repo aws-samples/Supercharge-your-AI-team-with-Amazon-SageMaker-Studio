@@ -1,4 +1,6 @@
-import PresignedUrlService, { PresignedUrlServiceInterface } from './preSignedUrlService';
+import PresignedUrlService, {
+  PresignedUrlServiceInterface,
+} from './preSignedUrlService';
 
 export type CreateLoginPresignedUrlError =
   | typeof noAuthorization
@@ -39,23 +41,31 @@ export interface PresignedUrl {
  * @param region
  * @returns
  */
-export async function createPresignedUrlForUser(userInfo: UserInfo, domainName: string, accountId: string, region: string): Promise<string> {
-  const presignedUrlService: PresignedUrlServiceInterface = new PresignedUrlService(accountId, region);
-  presignedUrlService.assertUserIsContainedInCognitoGroupForCA(userInfo, domainName);
+export async function createPresignedUrlForUser(
+  userInfo: UserInfo,
+  domainName: string,
+  accountId: string,
+  region: string
+): Promise<string> {
+  const presignedUrlService: PresignedUrlServiceInterface =
+    new PresignedUrlService(accountId, region);
 
-  const domainIdForCA = await presignedUrlService.findDomainWithName(domainName);
+  const domainIdForCA = await presignedUrlService.findDomainWithName(
+    domainName
+  );
   if (domainIdForCA === undefined || domainIdForCA === null) {
     throw new Error('Domain underfined or null');
   }
 
-  presignedUrlService.assureUserExistsAndIsReady(userInfo.userName, domainIdForCA);
-
-  const url = await presignedUrlService.createPresignedUrl(domainIdForCA, userInfo.userName);
+  const url = await presignedUrlService.createPresignedUrl(
+    domainIdForCA,
+    userInfo.userName
+  );
   if (url === undefined || url === null) {
     throw new Error('Presigned URL is null or undefined');
   }
 
-  return new Promise<string>(resolve => {
+  return new Promise<string>((resolve) => {
     resolve(url);
   });
 }

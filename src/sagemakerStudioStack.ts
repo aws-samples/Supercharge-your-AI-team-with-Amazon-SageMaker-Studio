@@ -7,6 +7,8 @@ import { SagemakerDomain } from './sagemakerDomain';
 import { CfnUserPoolGroup } from 'aws-cdk-lib/aws-cognito';
 import { Bucket, StorageClass } from 'aws-cdk-lib/aws-s3';
 import { Annotations, Duration, Tags } from 'aws-cdk-lib';
+import { CfnUserProfile } from 'aws-cdk-lib/aws-sagemaker';
+import { SageMakerExecutionRole } from './sagemakerExecutionRole';
 
 export interface SageMakerStackProps extends cdk.StackProps {
   vpc: ec2.Vpc;
@@ -14,6 +16,7 @@ export interface SageMakerStackProps extends cdk.StackProps {
   userDataBucketName: string;
   env: { account: string; region: string };
   cognitoUserPoolId: string;
+  userProfileName: string;
 }
 
 export class SagemakerStudioStack extends cdk.Stack {
@@ -44,7 +47,10 @@ export class SagemakerStudioStack extends cdk.Stack {
       encryption: s3.BucketEncryption.KMS,
       encryptionKey: sagemakerKms.getkey(),
       versioned: true,
-      serverAccessLogsBucket: new Bucket(this, '${props.userDataBucketName}-access-logs'),
+      serverAccessLogsBucket: new Bucket(
+        this,
+        '${props.userDataBucketName}-access-logs'
+      ),
       removalPolicy: cdk.RemovalPolicy.DESTROY,
       enforceSSL: true,
       lifecycleRules: [
@@ -81,8 +87,32 @@ export class SagemakerStudioStack extends cdk.Stack {
       kmsKey: sagemakerKms.getkey(),
     });
 
+    // **********************************************************************************************************************
+    // Sagemaker Execution Role (assumed by the end user)
+    // **********************************************************************************************************************
+    const sagemakerExecutionRole = new SageMakerExecutionRole(
+      this,
+      'SagemakerStudioExecutionRole',
+      {
+        account: props.env.account,
+        domainName: props.domainName,
+        kmsKey: sagemakerKms.getkey(),
+      }
+    );
+
+    // **********************************************************************************************************************
+    // Sagemaker User Profile
+    // **********************************************************************************************************************
+    new CfnUserProfile(this, 'UserProfile', {
+      domainId: sgDomain.getDomainId(),
+      userProfileName: props.userProfileName,
+      userSettings: {
+        executionRole: sagemakerExecutionRole.getRole().roleArn,
+      },
+    });
+
     //Ensures key policy is updated to allow only Sagemaker execution role to perform encrypt decrypt action
-    sagemakerKms.updateKeyPolicy(sgDomain.getSagemakerExecutionRole().roleArn);
+    sagemakerKms.updateKeyPolicy(sagemakerExecutionRole.getRole().roleArn);
     this.cognitoGroupName = cognitoGroupName;
   }
 

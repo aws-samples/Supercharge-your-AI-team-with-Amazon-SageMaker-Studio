@@ -1,6 +1,11 @@
 import { Construct } from 'constructs';
 import * as iam from 'aws-cdk-lib/aws-iam';
-import { Effect, PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
+import {
+  Effect,
+  PolicyStatement,
+  Role,
+  ServicePrincipal,
+} from 'aws-cdk-lib/aws-iam';
 import { IKey } from 'aws-cdk-lib/aws-kms';
 
 export interface SageMakerExecutionRoleProps {
@@ -13,7 +18,11 @@ export class SageMakerExecutionRole extends Construct {
   private executionRoleArn: string;
   private executionRole: Role;
 
-  constructor(scope: Construct, id: string, props: SageMakerExecutionRoleProps) {
+  constructor(
+    scope: Construct,
+    id: string,
+    props: SageMakerExecutionRoleProps
+  ) {
     super(scope, id);
 
     const cwLogsPolicy = new iam.PolicyStatement({
@@ -30,11 +39,23 @@ export class SageMakerExecutionRole extends Construct {
         'logs:PutResourcePolicy',
         'logs:UpdateLogDelivery',
       ],
-      resources: [`arn:aws:logs:eu-central-1:${props.account}:log-group:/aws/sagemaker/*`, `arn:aws:logs:eu-central-1:${props.account}:log-stream:*`],
+      resources: [
+        `arn:aws:logs:eu-central-1:${props.account}:log-group:/aws/sagemaker/*`,
+        `arn:aws:logs:eu-central-1:${props.account}:log-stream:*`,
+      ],
     });
 
     const createDeleteAppPolicy = new iam.PolicyStatement({
-      actions: ['sagemaker:CreateApp', 'sagemaker:DescribeApp', 'sagemaker:DeleteApp'],
+      actions: [
+        'sagemaker:DescribeApp',
+        'sagemaker:DescribeDomain',
+        'sagemaker:DeleteApp',
+        'sagemaker:CreateApp',
+        'sagemaker:DescribeUserProfile',
+        'sagemaker:DescribeStudioLifecycleConfig',
+        'sagemaker:ListStudioLifecycleConfigs',
+        'sagemaker:Search',
+      ],
       resources: ['*'],
     });
     const createJobs = (domainName: string, keyArn: string) => {
@@ -205,7 +226,15 @@ export class SageMakerExecutionRole extends Construct {
     };
 
     const kmsPolicy = new iam.PolicyStatement({
-      actions: ['kms:Decrypt', 'kms:Encrypt', 'kms:DescribeKey', 'kms:ReEncrypt*', 'kms:GenerateDataKey*', 'kms:CreateGrant', 'kms:RetireGrant'],
+      actions: [
+        'kms:Decrypt',
+        'kms:Encrypt',
+        'kms:DescribeKey',
+        'kms:ReEncrypt*',
+        'kms:GenerateDataKey*',
+        'kms:CreateGrant',
+        'kms:RetireGrant',
+      ],
       resources: [props.kmsKey.keyArn],
       sid: 'sagemakerkmsPolicy',
     });
@@ -234,7 +263,12 @@ export class SageMakerExecutionRole extends Construct {
     });
 
     new iam.PolicyStatement({
-      actions: ['s3:GetObject', 's3:PutObject', 's3:DeleteObject', 's3:ListBucket'],
+      actions: [
+        's3:GetObject',
+        's3:PutObject',
+        's3:DeleteObject',
+        's3:ListBucket',
+      ],
       resources: ['*'],
       sid: 'sagemakerS3policy',
     });
@@ -263,18 +297,26 @@ export class SageMakerExecutionRole extends Construct {
         'ecr:InitiateLayerUpload',
         'ecr:PutImage',
       ],
-      resources: ['arn:aws:ecr:*:*:repository/*sagemaker*'],
+      resources: ['arn:aws:ecr:*:*:repository/*'],
       sid: 'sagemakerEcrPolicy',
     });
 
     const denySageMakerPolicy = new iam.PolicyStatement({
-      actions: ['sagemaker:CreateDomain', 'sagemaker:UpdateDomain', 'sagemaker:CreateUserProfile', 'sagemaker:UpdateUserProfile'],
+      actions: [
+        'sagemaker:CreateDomain',
+        'sagemaker:UpdateDomain',
+        'sagemaker:CreateUserProfile',
+        'sagemaker:UpdateUserProfile',
+      ],
       resources: ['*'],
       sid: 'denySageMakerPolicy',
     });
 
     const executionRole = new iam.Role(this, 'SageMakerStudioExecutionRole', {
-      assumedBy: new iam.CompositePrincipal(new ServicePrincipal('sagemaker.amazonaws.com'), new ServicePrincipal('events.amazonaws.com')),
+      assumedBy: new iam.CompositePrincipal(
+        new ServicePrincipal('sagemaker.amazonaws.com'),
+        new ServicePrincipal('events.amazonaws.com')
+      ),
       roleName: `${props.domainName}-sagemaker-role`,
     });
 
@@ -316,7 +358,9 @@ export class SageMakerExecutionRole extends Construct {
 
     executionRole.addToPolicy(cwLogsPolicy);
     executionRole.addToPolicy(createDeleteAppPolicy);
-    executionRole.addToPolicy(createJobs(props.domainName, props.kmsKey.keyArn));
+    executionRole.addToPolicy(
+      createJobs(props.domainName, props.kmsKey.keyArn)
+    );
     executionRole.addToPolicy(createAdditionalJobs(props.domainName));
     executionRole.addToPolicy(describeOrDeleteJobs(props.domainName));
     executionRole.addToPolicy(listAdditionalJobs());

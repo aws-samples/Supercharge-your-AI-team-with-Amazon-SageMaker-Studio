@@ -1,12 +1,16 @@
 #!/usr/bin/env node
 import { App } from 'aws-cdk-lib';
 import { InfrastructureStack } from './infrastructureStack';
-import { SageMakerStackProps, SagemakerStudioStack } from './sagemakerStudioStack';
+import {
+  SageMakerStackProps,
+  SagemakerStudioStack,
+} from './sagemakerStudioStack';
 import { SagemakerLoginStack } from './sagemakerLoginStack';
 import { CognitoUserProps, CognitoUserStack } from './cognitoUserStack';
 
 //This is the standard callback url is for OAuth postman client.
-export const postmanDemoCallbackUrl = 'https://oauth.pstmn.io/v1/browser-callback';
+export const postmanDemoCallbackUrl =
+  'https://oauth.pstmn.io/v1/browser-callback';
 
 const main = (app: App): void => {
   const account = app.node.tryGetContext('account');
@@ -15,9 +19,13 @@ const main = (app: App): void => {
   const userName = app.node.tryGetContext('user');
   const userPassword = app.node.tryGetContext('password');
 
-  const infrastructureStack = new InfrastructureStack(app, 'infrastructure-stack', {
-    env: { account, region },
-  });
+  const infrastructureStack = new InfrastructureStack(
+    app,
+    'infrastructure-stack',
+    {
+      env: { account, region },
+    }
+  );
 
   const vpc = infrastructureStack.getVpc();
 
@@ -33,9 +41,14 @@ const main = (app: App): void => {
     userDataBucketName: `user-data-bucket-${domainName}`,
     env: { account, region },
     cognitoUserPoolId: loginStack.getCognitoUserPoolId(),
+    userProfileName: userName,
   };
 
-  const sageMakerStack = new SagemakerStudioStack(app, 'sagemaker-studio-stack', sageMakerStackProps);
+  const sageMakerStack = new SagemakerStudioStack(
+    app,
+    'sagemaker-studio-stack',
+    sageMakerStackProps
+  );
   sageMakerStack.addDependency(infrastructureStack);
   sageMakerStack.addDependency(loginStack);
 
@@ -46,7 +59,11 @@ const main = (app: App): void => {
     userName,
     userPassword,
   };
-  const cognitoDemoUsersStack = new CognitoUserStack(app, 'cognitoDemoUsers', cognitoDemoUserProps);
+  const cognitoDemoUsersStack = new CognitoUserStack(
+    app,
+    'cognitoDemoUsers',
+    cognitoDemoUserProps
+  );
   cognitoDemoUsersStack.node.addDependency(sageMakerStack);
   cognitoDemoUsersStack.node.addDependency(infrastructureStack);
   cognitoDemoUsersStack.node.addDependency(loginStack);
