@@ -13,7 +13,6 @@ import { SageMakerExecutionRole } from './sagemakerExecutionRole';
 export interface SageMakerStackProps extends cdk.StackProps {
   vpc: ec2.Vpc;
   domainName: string;
-  userDataBucketName: string;
   env: { account: string; region: string };
   cognitoUserPoolId: string;
   userProfileName: string;
@@ -41,7 +40,6 @@ export class SagemakerStudioStack extends cdk.Stack {
     // **********************************************************************************************************************
 
     new Bucket(this, 'SagemakerDataBucket', {
-      bucketName: props.userDataBucketName,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       accessControl: s3.BucketAccessControl.PRIVATE,
       encryption: s3.BucketEncryption.KMS,

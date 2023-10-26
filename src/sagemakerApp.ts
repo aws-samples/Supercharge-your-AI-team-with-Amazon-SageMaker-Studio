@@ -38,7 +38,6 @@ const main = (app: App): void => {
   const sageMakerStackProps: SageMakerStackProps = {
     vpc,
     domainName,
-    userDataBucketName: `user-data-bucket-${domainName}`,
     env: { account, region },
     cognitoUserPoolId: loginStack.getCognitoUserPoolId(),
     userProfileName: userName,

@@ -27,7 +27,6 @@ describe('Sagemaker Domain Stack test', () => {
     const studioStack = new SagemakerStudioStack(app, 'SagemakerDomainStack', {
       vpc: vpc,
       domainName: 'test1',
-      userDataBucketName: 'test1-userdatabucket',
       env: {
         region: 'eu-central-1',
         account: '123456789012',
@@ -44,7 +43,6 @@ describe('Sagemaker Domain Stack test', () => {
 
     //S3 bucket creation
     Template.fromStack(studioStack).hasResourceProperties('AWS::S3::Bucket', {
-      BucketName: 'test1-userdatabucket',
       PublicAccessBlockConfiguration: {
         BlockPublicAcls: true,
         BlockPublicPolicy: true,
