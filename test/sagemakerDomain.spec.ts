@@ -33,8 +33,14 @@ describe('Sagemaker Domain test suite', () => {
 
   //helper function to create Sagemaker domain
   function createSagemakerDomain(props: SagemakerDomainProps): Template {
-    const sagemakerDomain = new SagemakerDomain(sagemakerDomainStack, 'SagemakerDomain', props);
-    jest.spyOn(sagemakerDomain, 'getIsolatedSubnetIds').mockReturnValue(['subnet-123456789']);
+    const sagemakerDomain = new SagemakerDomain(
+      sagemakerDomainStack,
+      'SagemakerDomain',
+      props
+    );
+    jest
+      .spyOn(sagemakerDomain, 'getIsolatedSubnetIds')
+      .mockReturnValue(['subnet-123456789']);
 
     const template = Template.fromStack(sagemakerDomainStack);
     return template;
@@ -56,7 +62,7 @@ describe('Sagemaker Domain test suite', () => {
 
     // Assertions - DefaultExecutionRole has correct properties and no managed polices
     template.hasResourceProperties('AWS::IAM::Role', {
-      RoleName: 'demo123-sagemaker-role',
+      RoleName: 'demo123-sagemaker-studio-role',
       AssumeRolePolicyDocument: {},
     });
   });
@@ -130,7 +136,8 @@ describe('Sagemaker Domain test suite', () => {
         ExecutionRole: { 'Fn::GetAtt': [Match.anyValue(), 'Arn'] },
         JupyterServerAppSettings: {
           DefaultResourceSpec: {
-            SageMakerImageArn: 'arn:aws:sagemaker:eu-central-1:936697816551:image/jupyter-server-3',
+            SageMakerImageArn:
+              'arn:aws:sagemaker:eu-central-1:936697816551:image/jupyter-server-3',
           },
         },
         KernelGatewayAppSettings: {

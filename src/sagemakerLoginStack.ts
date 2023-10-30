@@ -1,10 +1,24 @@
 import { Annotations, Duration, Stack, StackProps } from 'aws-cdk-lib';
 import { Vpc } from 'aws-cdk-lib/aws-ec2';
-import { AnyPrincipal, Effect, ManagedPolicy, PolicyDocument, PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
+import {
+  AnyPrincipal,
+  Effect,
+  ManagedPolicy,
+  PolicyDocument,
+  PolicyStatement,
+  Role,
+  ServicePrincipal,
+} from 'aws-cdk-lib/aws-iam';
 import { Code, Function, Runtime } from 'aws-cdk-lib/aws-lambda';
 import { Construct } from 'constructs';
 import { SagemakerCognitoUserPool } from './sagemakerCognitoPool';
-import { AuthorizationType, CognitoUserPoolsAuthorizer, EndpointType, LambdaIntegration, RestApi } from 'aws-cdk-lib/aws-apigateway';
+import {
+  AuthorizationType,
+  CognitoUserPoolsAuthorizer,
+  EndpointType,
+  LambdaIntegration,
+  RestApi,
+} from 'aws-cdk-lib/aws-apigateway';
 import { OAuthScope } from 'aws-cdk-lib/aws-cognito';
 
 export interface SagemakerLoginStackProps extends StackProps {
@@ -22,63 +36,80 @@ export class SagemakerLoginStack extends Stack {
     Annotations.of(this).addInfo(`Region  : ${props.env.region}`);
 
     if (props.env.account === undefined || props.env.region === undefined) {
-      Annotations.of(this).addError('One of the require parameters account, region or callbackUrls is not set');
+      Annotations.of(this).addError(
+        'One of the require parameters account, region or callbackUrls is not set'
+      );
     }
 
     const cognitoDomainPrefix = `sagemaker-login-${props.env.account}`;
 
     //Creates user pool
-    const sagemakerCognitoUserPool = new SagemakerCognitoUserPool(this, 'UserPool', {
-      userPoolName: 'sagemaker-user-pool',
-      email: 'noreply@sagemaker-demo.com',
-      cognitoDomainPrefix: cognitoDomainPrefix,
-      callbackUrls: props.callbackUrls,
-      userPoolClientName: 'sagemaker-demo-client',
-    });
+    const sagemakerCognitoUserPool = new SagemakerCognitoUserPool(
+      this,
+      'UserPool',
+      {
+        userPoolName: 'sagemaker-user-pool',
+        email: 'noreply@sagemaker-demo.com',
+        cognitoDomainPrefix: cognitoDomainPrefix,
+        callbackUrls: props.callbackUrls,
+        userPoolClientName: 'sagemaker-demo-client',
+      }
+    );
 
     this.cognitoUserPoolId = sagemakerCognitoUserPool.getUserPool().userPoolId;
 
     // **********************************************************
     // Create role and policy to allow creation of a presigned url
     // **********************************************************
-    const createLoginPresignedUrlForUserRole = new Role(this, 'CreatePresignedUrlRole', {
-      roleName: 'create-presigned-url-role',
-      description: 'Role to create a presigned url for login for a user',
-      assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
-      managedPolicies: [ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole')],
-    });
+    const createLoginPresignedUrlForUserRole = new Role(
+      this,
+      'CreatePresignedUrlRole',
+      {
+        roleName: 'create-presigned-url-role',
+        description: 'Role to create a presigned url for login for a user',
+        assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
+        managedPolicies: [
+          ManagedPolicy.fromAwsManagedPolicyName(
+            'service-role/AWSLambdaBasicExecutionRole'
+          ),
+        ],
+      }
+    );
 
-    const presignedUrlPolicy = new ManagedPolicy(this, 'create-presigned-url-policy', {
-      managedPolicyName: 'create-presigned-url-policy',
-      statements: [
-        new PolicyStatement({
-          sid: 'CreatePresignedUrl',
-          resources: ['*'],
-          actions: [
-            'sagemaker:CreatePresignedDomainUrl',
-            'sagemaker:ListDomains',
-            'sagemaker:DescribeDomain',
-            'sagemaker:CreateUserProfile',
-            'sagemaker:DescribeUserProfile',
-            'iam:PassRole',
-            'sagemaker:ListTags',
-            'sagemaker:AddTags',
-          ],
-          effect: Effect.ALLOW,
-        }),
-        new PolicyStatement({
-          sid: 'AssumeDefaultSagemakerStudioRoles',
-          resources: ['*'],
-          actions: ['iam:PassRole'],
-          effect: Effect.ALLOW,
-          conditions: {
-            StringEquals: {
-              'iam:PassedToService': 'sagemaker.amazonaws.com',
+    const presignedUrlPolicy = new ManagedPolicy(
+      this,
+      'create-presigned-url-policy',
+      {
+        managedPolicyName: 'create-presigned-url-policy',
+        statements: [
+          new PolicyStatement({
+            sid: 'CreatePresignedUrl',
+            resources: ['*'],
+            actions: [
+              'sagemaker:CreatePresignedDomainUrl',
+              'sagemaker:ListDomains',
+              'sagemaker:DescribeDomain',
+              'sagemaker:CreateUserProfile',
+              'sagemaker:DescribeUserProfile',
+              'sagemaker:ListTags',
+              'sagemaker:AddTags',
+            ],
+            effect: Effect.ALLOW,
+          }),
+          new PolicyStatement({
+            sid: 'AssumeDefaultSagemakerStudioRoles',
+            resources: ['*'],
+            actions: ['iam:PassRole'],
+            effect: Effect.ALLOW,
+            conditions: {
+              StringEquals: {
+                'iam:PassedToService': 'sagemaker.amazonaws.com',
+              },
             },
-          },
-        }),
-      ],
-    });
+          }),
+        ],
+      }
+    );
 
     createLoginPresignedUrlForUserRole.addManagedPolicy(presignedUrlPolicy);
 
@@ -127,11 +158,14 @@ export class SagemakerLoginStack extends Stack {
       },
     });
 
-    const validator = presignedUrlRestApi.addRequestValidator('validate-request', {
-      requestValidatorName: 'general-request-validator',
-      validateRequestBody: true,
-      validateRequestParameters: true,
-    });
+    const validator = presignedUrlRestApi.addRequestValidator(
+      'validate-request',
+      {
+        requestValidatorName: 'general-request-validator',
+        validateRequestBody: true,
+        validateRequestParameters: true,
+      }
+    );
 
     const authorizer = new CognitoUserPoolsAuthorizer(this, 'Authorizer', {
       authorizerName: 'PresignedUrlApiAuthorizer',
@@ -140,16 +174,20 @@ export class SagemakerLoginStack extends Stack {
     });
 
     //REST Api path is /domainName/{domainName}/getPresignedUrl
-    const domainNamePath = presignedUrlRestApi.root.addResource('domainName').addResource('{domainName}');
-    domainNamePath.addResource('getPresignedUrl').addMethod('GET', new LambdaIntegration(preSignedUrlLambda), {
-      requestParameters: {
-        'method.request.path.domainName': true,
-      },
-      requestValidator: validator,
-      authorizationScopes: [OAuthScope.OPENID.scopeName],
-      authorizationType: AuthorizationType.COGNITO,
-      authorizer: authorizer,
-    });
+    const domainNamePath = presignedUrlRestApi.root
+      .addResource('domainName')
+      .addResource('{domainName}');
+    domainNamePath
+      .addResource('getPresignedUrl')
+      .addMethod('GET', new LambdaIntegration(preSignedUrlLambda), {
+        requestParameters: {
+          'method.request.path.domainName': true,
+        },
+        requestValidator: validator,
+        authorizationScopes: [OAuthScope.OPENID.scopeName],
+        authorizationType: AuthorizationType.COGNITO,
+        authorizer: authorizer,
+      });
   }
 
   public getCognitoUserPoolId() {

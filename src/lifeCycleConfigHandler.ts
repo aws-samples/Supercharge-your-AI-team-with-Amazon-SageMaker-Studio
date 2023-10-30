@@ -1,7 +1,17 @@
 import { Duration } from 'aws-cdk-lib';
-import { ManagedPolicy, PolicyStatement, Role, ServicePrincipal } from 'aws-cdk-lib/aws-iam';
+import {
+  ManagedPolicy,
+  PolicyStatement,
+  Role,
+  ServicePrincipal,
+} from 'aws-cdk-lib/aws-iam';
 import { RetentionDays } from 'aws-cdk-lib/aws-logs';
-import { AwsCustomResource, AwsCustomResourcePolicy, AwsSdkCall, PhysicalResourceId } from 'aws-cdk-lib/custom-resources';
+import {
+  AwsCustomResource,
+  AwsCustomResourcePolicy,
+  AwsSdkCall,
+  PhysicalResourceId,
+} from 'aws-cdk-lib/custom-resources';
 import { Construct } from 'constructs';
 
 export interface LifeCycleConfigTag {
@@ -38,6 +48,7 @@ export class LifeCycleConfigHandler extends Construct {
         StudioLifecycleConfigAppType: props.lifecycleAppType,
         StudioLifecycleConfigContent: props.lifecycleScript,
         StudioLifecycleConfigName: props.lifecycleConfigName,
+        // Tags: { DomainName: props.domainName },
       },
 
       physicalResourceId: PhysicalResourceId.of(props.sagemakerDomainId),
@@ -66,12 +77,18 @@ export class LifeCycleConfigHandler extends Construct {
     const lambdaRole = new Role(this, `LifeCycleHandlerRole-${appType}`, {
       roleName: `${props.domainName}-${appType}-lc-handler-role`,
       assumedBy: new ServicePrincipal('lambda.amazonaws.com'),
-      managedPolicies: [ManagedPolicy.fromAwsManagedPolicyName('service-role/AWSLambdaBasicExecutionRole')],
+      managedPolicies: [
+        ManagedPolicy.fromAwsManagedPolicyName(
+          'service-role/AWSLambdaBasicExecutionRole'
+        ),
+      ],
     });
 
     lambdaRole.addToPolicy(
       new PolicyStatement({
-        resources: [`arn:aws:lambda:${props.region}:${props.account}:function:${props.domainName}-*-lc`],
+        resources: [
+          `arn:aws:lambda:${props.region}:${props.account}:function:${props.domainName}-*-lc`,
+        ],
         actions: ['lambda:InvokeFunction'],
       })
     );
@@ -84,23 +101,32 @@ export class LifeCycleConfigHandler extends Construct {
     );
 
     //LifeCycle Config custom resource
-    const createLifeCycleHandler = new AwsCustomResource(this, `CreateLifeCycleConfig-${appType}`, {
-      functionName: `${props.domainName}-${appType}-create-lifecycle-config`,
-      policy: AwsCustomResourcePolicy.fromSdkCalls({
-        resources: AwsCustomResourcePolicy.ANY_RESOURCE,
-      }),
-      onCreate: createLifeCycleConfig,
-      onUpdate: describeLifecycleConfig,
-      onDelete: deleteLifeCycleConfig,
-      role: lambdaRole,
-      logRetention: RetentionDays.ONE_MONTH,
-      timeout: Duration.minutes(5),
-      installLatestAwsSdk: false,
-    });
+    const createLifeCycleHandler = new AwsCustomResource(
+      this,
+      `CreateLifeCycleConfig-${appType}`,
+      {
+        functionName: `${props.domainName}-${appType}-create-lifecycle-config`,
+        policy: AwsCustomResourcePolicy.fromSdkCalls({
+          resources: AwsCustomResourcePolicy.ANY_RESOURCE,
+        }),
+        onCreate: createLifeCycleConfig,
+        onUpdate: describeLifecycleConfig,
+        onDelete: deleteLifeCycleConfig,
+        role: lambdaRole,
+        logRetention: RetentionDays.ONE_MONTH,
+        timeout: Duration.minutes(5),
+        installLatestAwsSdk: false,
+      }
+    );
 
-    this.lifecycle_arn = createLifeCycleHandler.getResponseField('StudioLifecycleConfigArn');
+    this.lifecycle_arn = createLifeCycleHandler.getResponseField(
+      'StudioLifecycleConfigArn'
+    );
 
-    const defaultUserSettings = this.getDefaultSettings(props.lifecycleAppType, this.getStudioLifeCycleArn());
+    const defaultUserSettings = this.getDefaultSettings(
+      props.lifecycleAppType,
+      this.getStudioLifeCycleArn()
+    );
 
     const updateDomain: AwsSdkCall = {
       service: 'SageMaker',
@@ -112,18 +138,22 @@ export class LifeCycleConfigHandler extends Construct {
       physicalResourceId: PhysicalResourceId.of(props.lifecycleConfigName),
     };
 
-    const updateDomainCR = new AwsCustomResource(this, `UpdateDomain-${appType}`, {
-      functionName: `${props.domainName}-${appType}-update-lc`,
-      policy: AwsCustomResourcePolicy.fromSdkCalls({
-        resources: AwsCustomResourcePolicy.ANY_RESOURCE,
-      }),
-      onCreate: updateDomain,
-      onUpdate: updateDomain,
-      role: lambdaRole,
-      logRetention: RetentionDays.ONE_MONTH,
-      timeout: Duration.minutes(5),
-      installLatestAwsSdk: false,
-    });
+    const updateDomainCR = new AwsCustomResource(
+      this,
+      `UpdateDomain-${appType}`,
+      {
+        functionName: `${props.domainName}-${appType}-update-lc`,
+        policy: AwsCustomResourcePolicy.fromSdkCalls({
+          resources: AwsCustomResourcePolicy.ANY_RESOURCE,
+        }),
+        onCreate: updateDomain,
+        onUpdate: updateDomain,
+        role: lambdaRole,
+        logRetention: RetentionDays.ONE_MONTH,
+        timeout: Duration.minutes(5),
+        installLatestAwsSdk: false,
+      }
+    );
     updateDomainCR.node.addDependency(createLifeCycleHandler);
   }
 

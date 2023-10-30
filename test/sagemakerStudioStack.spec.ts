@@ -27,23 +27,22 @@ describe('Sagemaker Domain Stack test', () => {
     const studioStack = new SagemakerStudioStack(app, 'SagemakerDomainStack', {
       vpc: vpc,
       domainName: 'test1',
-      userDataBucketName: 'test1-userdatabucket',
       env: {
         region: 'eu-central-1',
         account: '123456789012',
       },
       cognitoUserPoolId: 'test1-userpool',
+      userProfileName: 'test1-userprofile',
     });
 
     // Assertions -4 (2 custom resource, 1 execution role, 1 log retention)
-    Template.fromStack(studioStack).resourceCountIs('AWS::IAM::Role', 4);
+    Template.fromStack(studioStack).resourceCountIs('AWS::IAM::Role', 5);
 
     // Assertions -1 Key Alias
     Template.fromStack(studioStack).resourceCountIs('AWS::KMS::Alias', 1);
 
     //S3 bucket creation
     Template.fromStack(studioStack).hasResourceProperties('AWS::S3::Bucket', {
-      BucketName: 'test1-userdatabucket',
       PublicAccessBlockConfiguration: {
         BlockPublicAcls: true,
         BlockPublicPolicy: true,
@@ -53,8 +52,19 @@ describe('Sagemaker Domain Stack test', () => {
     });
 
     //Cognito User Group
-    Template.fromStack(studioStack).hasResourceProperties('AWS::Cognito::UserPoolGroup', {
-      GroupName: 'test1',
-    });
+    Template.fromStack(studioStack).hasResourceProperties(
+      'AWS::Cognito::UserPoolGroup',
+      {
+        GroupName: 'test1',
+      }
+    );
+
+    //Sagemaker User Profile
+    Template.fromStack(studioStack).hasResourceProperties(
+      'AWS::SageMaker::UserProfile',
+      {
+        UserProfileName: 'test1-userprofile',
+      }
+    );
   });
 });
