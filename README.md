@@ -117,11 +117,14 @@ The sample CDK application demonstrates how various components, including the Sa
 ## Cleanup
 
 - From the AWS Console > SageMaker > Domain > User Profile > Apps Make sure all running apps (Kernel gateway or Jupyter lab) are stopped and deleted
-- Ensure all SageMaker user profiles which are created during login step, are deleted as well
 - From AWS console > EFS > select the EFS created for demo > Delete. It will open a dialog box. Confirm delete. To learn more visit [how to delete Elastic File System](https://docs.aws.amazon.com/efs/latest/ug/delete-efs-fs.html)
-- Run the below command
+- Once the EFS is deleted, you need to need security groups associated with the EFS as well.
+  - From AWS console go to EC2 -> Security Groups -> select security group for inbound EFS -> edit inboud rules -> Delete the existing rule
+  - From AWS console go to EC2 -> Security Groups -> select security group for outbound EFS -> edit outbound rules -> Delete the existing rule
+  - From AWS console go to EC2 -> Security Groups -> select security groups for inbound and outbound EFS -> Actions -> Delete. This will pop-up a dialog box. Confirm that you want to delete the Security Groups.
+- Run the below command. Use the same values that you used earlier while creating the CDK stack.
   ```
-  npx cdk destroy --all
+  npx cdk destroy --all -c account=11111111111 -c region='eu-central-1' -c domain-name=team1 -c user=demo-user -c password=<password> --require-approval never
   ```
 
 ## License
