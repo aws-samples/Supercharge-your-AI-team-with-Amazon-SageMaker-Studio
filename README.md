@@ -90,6 +90,8 @@ The demo CDK application provides a concise overview of key components such as t
   - Click on the File Menu -> Import and select the [postman environment json file](./postman/sagemaker.postman_environment.json) included in this repo. Import this file.
   - Go to **'Environments'** tab in the Postman left panel. You will see an envionment called 'Sagemaker' from previous step. Add the below env variables which you would see as part of the stack deployment console output from **SagemakerLoginStack**.
 
+    ![Environment](./docs/environment_tab.png)
+
     ````console
     ..... output from the cdk deploy .....
 
@@ -115,7 +117,7 @@ The demo CDK application provides a concise overview of key components such as t
     ````
 
   - Make sure to save the environment by clicking the "save" button
-  - ![Environment](./docs/environment_tab.png) ![Environment](./docs/environment_selection.png)
+  - ![Environment](./docs/environment_selection.png)
 
   - In Postman click on Collections -> Sagemaker and select the `Authorization` tab. All the values in this tab should be prefilled already. On the top right corner select the environment 'Sagemaker' that was populated earlier (it is quite possible, No Environment is selected by default). Scroll down in the page and click on 'Get New Access Token'.
 
