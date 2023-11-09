@@ -4,3 +4,9 @@ tmp
 node_modules
 cdk.out
 .vscode
+cdk.dist
+tmp
+/out-tsc
+node_modules
+cdk.out
+.vsc

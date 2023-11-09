@@ -39,7 +39,8 @@ export class SagemakerStudioStack extends cdk.Stack {
     // Create a data bucket for the domain users for processing jobs.
     // **********************************************************************************************************************
 
-    new Bucket(this, 'SagemakerDataBucket', {
+    const dataBucket = new Bucket(this, 'SagemakerDataBucket', {
+      bucketName: `${props.domainName}-${props.env.region}-${props.env.account}`,
       blockPublicAccess: s3.BlockPublicAccess.BLOCK_ALL,
       accessControl: s3.BucketAccessControl.PRIVATE,
       encryption: s3.BucketEncryption.KMS,
@@ -93,8 +94,10 @@ export class SagemakerStudioStack extends cdk.Stack {
       'SagemakerStudioExecutionRole',
       {
         account: props.env.account,
+        region: props.env.region,
         domainName: props.domainName,
         kmsKey: sagemakerKms.getkey(),
+        dataBucketArn: dataBucket.bucketArn,
       }
     );
 
