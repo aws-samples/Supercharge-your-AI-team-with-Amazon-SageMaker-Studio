@@ -10,8 +10,10 @@ import { IKey } from 'aws-cdk-lib/aws-kms';
 
 export interface SageMakerExecutionRoleProps {
   account: string;
+  region: string;
   domainName: string;
   kmsKey: IKey;
+  dataBucketArn: string;
 }
 
 export class SageMakerExecutionRole extends Construct {
@@ -183,7 +185,6 @@ export class SageMakerExecutionRole extends Construct {
           'sagemaker:ListPipelineExecutionSteps',
           'sagemaker:ListPipelineExecutions',
           'sagemaker:ListTrainingJobs',
-          'sagemaker:ListTraninigJobsForHyperParameterTuningJob',
           'sagemaker:ListTrialComponents',
           'sagemaker:ListTrials',
           'sagemaker:ListAssociations',
@@ -249,28 +250,44 @@ export class SageMakerExecutionRole extends Construct {
       actions: [
         'ec2:CreateNetworkInterface',
         'ec2:CreateNetworkInterfacePermission',
+        'ec2:CreateVpcEndpoint',
         'ec2:DeleteNetworkInterface',
         'ec2:DeleteNetworkInterfacePermission',
-        'ec2:DescribeNetworkInterfaces',
-        'ec2:DescribeVpcs',
         'ec2:DescribeDhcpOptions',
-        'ec2:DescribeSubnets',
+        'ec2:DescribeNetworkInterfaces',
+        'ec2:DescribeRouteTables',
         'ec2:DescribeSecurityGroups',
+        'ec2:DescribeSubnets',
         'ec2:DescribeVpcEndpoints',
+        'ec2:DescribeVpcs',
+        'elasticfilesystem:DescribeFileSystems',
+        'elasticfilesystem:DescribeMountTargets',
       ],
       resources: ['*'],
       sid: 'sagemakerEc2policy',
     });
 
-    new iam.PolicyStatement({
+    const s3AccessPolicy = new iam.PolicyStatement({
       actions: [
         's3:GetObject',
+        's3:GetObjectAcl',
+        's3:GetObjectTagging',
         's3:PutObject',
+        's3:PutObjectAcl',
+        's3:PutObjectTagging',
         's3:DeleteObject',
-        's3:ListBucket',
+        's3:AbortMultipartUpload',
+        's3:ListMultipartUploadParts',
+        's3:ListBucketMultipartUploads',
       ],
-      resources: ['*'],
-      sid: 'sagemakerS3policy',
+      resources: [`${props.dataBucketArn}/*`],
+      sid: 'sagemakerS3Getpolicy',
+    });
+
+    const s3ListPolicy = new iam.PolicyStatement({
+      actions: ['s3:ListBucket', 's3:GetBucketLocation'],
+      resources: [props.dataBucketArn],
+      sid: 'sagemakerS3ListBucketpolicy',
     });
 
     const iamPassPolicy = new iam.PolicyStatement({
@@ -284,7 +301,7 @@ export class SageMakerExecutionRole extends Construct {
       },
     });
 
-    new iam.PolicyStatement({
+    const ecrAccessPolicy = new iam.PolicyStatement({
       actions: [
         'ecr:GetAuthorizationToken',
         'ecr:GetDownloadUrlForLayer',
@@ -297,7 +314,7 @@ export class SageMakerExecutionRole extends Construct {
         'ecr:InitiateLayerUpload',
         'ecr:PutImage',
       ],
-      resources: ['arn:aws:ecr:*:*:repository/*'],
+      resources: ['*'],
       sid: 'sagemakerEcrPolicy',
     });
 
@@ -317,7 +334,7 @@ export class SageMakerExecutionRole extends Construct {
         new ServicePrincipal('sagemaker.amazonaws.com'),
         new ServicePrincipal('events.amazonaws.com')
       ),
-      roleName: `${props.domainName}-sagemaker-role`,
+      roleName: `${props.domainName}-sagemaker-execution-role`,
     });
 
     const allowAssumeRoleOrganizationAccount = new iam.PolicyStatement({
@@ -344,7 +361,6 @@ export class SageMakerExecutionRole extends Construct {
 
     const notebookSchedulerPolicy = new iam.PolicyStatement({
       actions: [
-        'events:DeletRule',
         'events:PutTargets',
         'events:RemoveTargets',
         'events:DescribeRule',
@@ -373,6 +389,9 @@ export class SageMakerExecutionRole extends Construct {
     executionRole.addToPolicy(allowAssumeRoleOrganizationAccount);
     executionRole.addToPolicy(denyAssumeRoleSameAccount);
     executionRole.addToPolicy(notebookSchedulerPolicy);
+    executionRole.addToPolicy(ecrAccessPolicy);
+    executionRole.addToPolicy(s3AccessPolicy);
+    executionRole.addToPolicy(s3ListPolicy);
 
     this.executionRoleArn = executionRole.roleArn;
     this.executionRole = executionRole;

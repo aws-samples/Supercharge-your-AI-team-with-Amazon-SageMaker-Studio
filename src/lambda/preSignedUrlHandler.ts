@@ -10,18 +10,25 @@ import {
   userNameMissing,
   userNotIncludedInGroupForAsset,
 } from './preSignedUrlLogic';
-import { APIGatewayEvent, APIGatewayProxyEvent, APIGatewayProxyResult } from 'aws-lambda';
+import {
+  APIGatewayEvent,
+  APIGatewayProxyEvent,
+  APIGatewayProxyResult,
+} from 'aws-lambda';
 import { Context } from 'vm';
 
 /**
  * Exntry point for lambda. Extracts user info and domain name from the event and calls the service layer.
- * The service layer creates the presigned url and returns it. Uses hexagonm architecture pattern.
+ * The service layer creates the presigned url and returns it. Uses hexagonal architecture pattern.
  *
  * @param event
  * @param context
  * @returns
  */
-export const handle = async (event: APIGatewayEvent, context: Context): Promise<APIGatewayProxyResult> => {
+export const handle = async (
+  event: APIGatewayEvent,
+  context: Context
+): Promise<APIGatewayProxyResult> => {
   const userInfo = extractUserInfo(event);
   const domainName = getDomainName(event);
   const arnRegex = /^arn:aws:lambda:(.*?):(\d+):/;
@@ -29,7 +36,12 @@ export const handle = async (event: APIGatewayEvent, context: Context): Promise<
   const region = match ? match[1] : null;
   const accountId = match ? match[2] : null;
 
-  const responseFromApi = await createPresignedUrlForUser(userInfo, domainName, accountId, region);
+  const responseFromApi = await createPresignedUrlForUser(
+    userInfo,
+    domainName,
+    accountId,
+    region
+  );
   return convertToHttpResponse(responseFromApi);
 };
 
@@ -103,7 +115,9 @@ export function getResponse(
   statusCode: number,
   body: string,
   isBase64Encoded: boolean | undefined = undefined,
-  customHeaders: { [header: string]: string | number | boolean } | undefined = undefined
+  customHeaders:
+    | { [header: string]: string | number | boolean }
+    | undefined = undefined
 ): APIGatewayProxyResult {
   return {
     statusCode: statusCode,
@@ -123,16 +137,26 @@ function convertToHttpResponse(result: string): APIGatewayProxyResult {
   const error = result;
   switch (error) {
     case noAuthorization:
-      return getResponse(401, JSON.stringify({ message: 'No authorization given.' }));
+      return getResponse(
+        401,
+        JSON.stringify({ message: 'No authorization given.' })
+      );
     case userNameMissing:
-      return getResponse(400, JSON.stringify({ message: 'No user name in token given.' }));
+      return getResponse(
+        400,
+        JSON.stringify({ message: 'No user name in token given.' })
+      );
     case domainNameMissing:
-      return getResponse(400, JSON.stringify({ message: 'No customer domain name provided.' }));
+      return getResponse(
+        400,
+        JSON.stringify({ message: 'No customer domain name provided.' })
+      );
     case userNotIncludedInGroupForAsset:
       return getResponse(
         403,
         JSON.stringify({
-          message: 'User not included in cognito group for requested customer asset.',
+          message:
+            'User not included in cognito group for requested customer asset.',
         })
       );
     case sagemakerDomainNotFound:
