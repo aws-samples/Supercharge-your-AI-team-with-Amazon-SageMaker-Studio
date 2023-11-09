@@ -117,6 +117,7 @@ The demo CDK application provides a concise overview of key components such as t
     ````
 
   - Make sure to save the environment by clicking the "save" button
+
   - ![Environment](./docs/environment_selection.png)
 
   - In Postman click on Collections -> Sagemaker and select the `Authorization` tab. All the values in this tab should be prefilled already. On the top right corner select the environment 'Sagemaker' that was populated earlier (it is quite possible, No Environment is selected by default). Scroll down in the page and click on 'Get New Access Token'.
