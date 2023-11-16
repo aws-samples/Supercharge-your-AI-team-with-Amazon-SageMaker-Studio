@@ -85,7 +85,7 @@ export class SageMakerExecutionRole extends Construct {
         ],
         conditions: {
           StringEquals: {
-            'aws:RequestTag/Domain': domainName,
+            'aws:RequestTag/DomainName': domainName,
           },
           ArnEquals: {
             'sagemaker:VolumeKmsKey': keyArn,
@@ -109,7 +109,7 @@ export class SageMakerExecutionRole extends Construct {
         ],
         conditions: {
           StringEquals: {
-            'aws:RequestTag/Domain': domainName,
+            'aws:RequestTag/DomainName': domainName,
           },
         },
       });
@@ -160,7 +160,7 @@ export class SageMakerExecutionRole extends Construct {
         ],
         conditions: {
           StringEquals: {
-            'aws:ResourceTag/Domain': domainName,
+            'aws:ResourceTag/DomainName': domainName,
           },
         },
       });
@@ -220,7 +220,7 @@ export class SageMakerExecutionRole extends Construct {
 
         conditions: {
           StringEquals: {
-            'aws:ResourceTag/Domain': domainName,
+            'aws:ResourceTag/DomainName': domainName,
           },
         },
       });
@@ -372,6 +372,16 @@ export class SageMakerExecutionRole extends Construct {
       sid: 'notebookSchedulerPolicy',
     });
 
+    const addTagsPolicy = new iam.PolicyStatement({
+      actions: ['sagemaker:AddTags'],
+      resources: ['*'],
+      conditions: {
+        Null: {
+          'sagemaker:TaggingAction': false,
+        },
+      },
+    })
+
     executionRole.addToPolicy(cwLogsPolicy);
     executionRole.addToPolicy(createDeleteAppPolicy);
     executionRole.addToPolicy(
@@ -392,6 +402,7 @@ export class SageMakerExecutionRole extends Construct {
     executionRole.addToPolicy(ecrAccessPolicy);
     executionRole.addToPolicy(s3AccessPolicy);
     executionRole.addToPolicy(s3ListPolicy);
+    executionRole.addToPolicy(addTagsPolicy);
 
     this.executionRoleArn = executionRole.roleArn;
     this.executionRole = executionRole;
