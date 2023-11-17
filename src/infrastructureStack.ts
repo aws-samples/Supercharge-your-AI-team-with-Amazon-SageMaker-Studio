@@ -64,7 +64,11 @@ export class InfrastructureStack extends Stack {
       'all htttps traffic from sg domain'
     );
 
-    sgEndpoint.addIngressRule(Peer.ipv4(vpc.vpcCidrBlock), Port.allTraffic(), 'allow all traffic from vpc');
+    sgEndpoint.addIngressRule(
+      Peer.ipv4(vpc.vpcCidrBlock),
+      Port.allTraffic(),
+      'allow all traffic from vpc'
+    );
 
     vpc.addGatewayEndpoint('sagemaker-s3-endpoint', {
       service: InterfaceVpcEndpointAwsService.S3,
@@ -92,6 +96,13 @@ export class InfrastructureStack extends Stack {
 
     vpc.addInterfaceEndpoint('sagemaker-notebook-endpoint', {
       service: InterfaceVpcEndpointAwsService.SAGEMAKER_NOTEBOOK,
+      privateDnsEnabled: true,
+      subnets: { subnetType: SubnetType.PRIVATE_ISOLATED },
+      securityGroups: [sgEndpoint],
+    });
+
+    vpc.addInterfaceEndpoint('cloudwatch-logs', {
+      service: InterfaceVpcEndpointAwsService.CLOUDWATCH_LOGS,
       privateDnsEnabled: true,
       subnets: { subnetType: SubnetType.PRIVATE_ISOLATED },
       securityGroups: [sgEndpoint],

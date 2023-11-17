@@ -275,7 +275,7 @@ describe('LimitedPermissionUserProfile tests ', () => {
             ],
             Condition: {
               StringEquals: {
-                'aws:RequestTag/Domain': 'test',
+                'aws:RequestTag/DomainName': 'test',
               },
               ArnEquals: {
                 'sagemaker:VolumeKmsKey': {
@@ -298,7 +298,7 @@ describe('LimitedPermissionUserProfile tests ', () => {
             ],
             Condition: {
               StringEquals: {
-                'aws:RequestTag/Domain': 'test',
+                'aws:RequestTag/DomainName': 'test',
               },
             },
             Effect: 'Allow',
@@ -355,7 +355,7 @@ describe('LimitedPermissionUserProfile tests ', () => {
             Effect: 'Allow',
             Condition: {
               StringEquals: {
-                'aws:ResourceTag/Domain': 'test',
+                'aws:ResourceTag/DomainName': 'test',
               },
             },
             Resource: '*',
@@ -393,7 +393,7 @@ describe('LimitedPermissionUserProfile tests ', () => {
             Effect: 'Allow',
             Condition: {
               StringEquals: {
-                'aws:ResourceTag/Domain': 'test',
+                'aws:ResourceTag/DomainName': 'test',
               },
             },
             Resource: '*',
@@ -428,6 +428,24 @@ describe('LimitedPermissionUserProfile tests ', () => {
             ],
             Effect: 'Allow',
             Resource: '*',
+          },
+        ]),
+      },
+    });
+
+    //AddTags
+    Template.fromStack(stack).hasResourceProperties('AWS::IAM::Policy', {
+      PolicyDocument: {
+        Statement: Match.arrayWith([
+          {
+            Action: 'sagemaker:AddTags',
+            Effect: 'Allow',
+            Resource: '*',
+            Condition: {
+              Null: {
+                'sagemaker:TaggingAction': false,
+              },
+            },
           },
         ]),
       },
