@@ -13,12 +13,16 @@ describe('Sagemaker KMS test suite', () => {
       account: '123456789012',
     });
 
-    kmsKey.updateKeyPolicy('arn:aws:iam::123456789012:role/test1-some-user');
+    kmsKey.grantAccessToUserRole(
+      'arn:aws:iam::123456789012:role/test1-some-user'
+    );
     expect(kmsKey.getkey()).toBeDefined();
 
     Template.fromStack(stack).hasResourceProperties('AWS::KMS::Alias', {
       AliasName: 'alias/test1',
-      TargetKeyId: { 'Fn::GetAtt': [Match.stringLikeRegexp('^testSagemakerKmsKey*'), 'Arn'] },
+      TargetKeyId: {
+        'Fn::GetAtt': [Match.stringLikeRegexp('^testSagemakerKmsKey*'), 'Arn'],
+      },
     });
 
     Template.fromStack(stack).hasResourceProperties('AWS::KMS::Key', {
@@ -32,7 +36,13 @@ describe('Sagemaker KMS test suite', () => {
             Resource: '*',
           },
           {
-            Action: ['kms:Decrypt', 'kms:Encrypt', 'kms:ReEncrypt*', 'kms:GenerateDataKey*', 'kms:DescribeKey'],
+            Action: [
+              'kms:Decrypt',
+              'kms:Encrypt',
+              'kms:ReEncrypt*',
+              'kms:GenerateDataKey*',
+              'kms:DescribeKey',
+            ],
             Effect: 'Allow',
             Resource: '*',
             Principal: {

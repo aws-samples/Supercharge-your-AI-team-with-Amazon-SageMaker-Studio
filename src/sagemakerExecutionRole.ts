@@ -42,8 +42,8 @@ export class SageMakerExecutionRole extends Construct {
         'logs:UpdateLogDelivery',
       ],
       resources: [
-        `arn:aws:logs:eu-central-1:${props.account}:log-group:/aws/sagemaker/*`,
-        `arn:aws:logs:eu-central-1:${props.account}:log-stream:*`,
+        `arn:aws:logs:${props.region}:${props.account}:log-group:/aws/sagemaker/*`,
+        `arn:aws:logs:${props.region}:${props.account}:log-stream:*`,
       ],
     });
 
@@ -54,6 +54,7 @@ export class SageMakerExecutionRole extends Construct {
         'sagemaker:DeleteApp',
         'sagemaker:CreateApp',
         'sagemaker:DescribeUserProfile',
+        'sagemaker:DescribeSpace',
         'sagemaker:DescribeStudioLifecycleConfig',
         'sagemaker:ListStudioLifecycleConfigs',
         'sagemaker:Search',
@@ -73,15 +74,6 @@ export class SageMakerExecutionRole extends Construct {
           'sagemaker:CreateProcessingJob',
           'sagemaker:CreateTrainingJob',
           'sagemaker:CreateTransformJob',
-          'sagemaker:CreateDataQualityJobDefinition',
-          'sagemaker:CreateHyperParameterTuningJob',
-          'sagemaker:CreateModelBiasJobDefinition',
-          'sagemaker:CreateModelQualityJobDefinition',
-          'sagemaker:CreateMonitoringSchedule',
-          'sagemaker:CreateProcessingJob',
-          'sagemaker:CreateTrainingJob',
-          'sagemaker:CreateTransformJob',
-          'sagemaker:CreateModel',
         ],
         conditions: {
           StringEquals: {
@@ -106,6 +98,7 @@ export class SageMakerExecutionRole extends Construct {
           'sagemaker:CreatePipeline',
           'sagemaker:CreateTrial',
           'sagemaker:CreateTrialComponent',
+          'sagemaker:CreateModel',
         ],
         conditions: {
           StringEquals: {
@@ -115,6 +108,31 @@ export class SageMakerExecutionRole extends Construct {
       });
     };
 
+    const creatEndPoint = (domainName: string) => {
+      return new PolicyStatement({
+        effect: Effect.ALLOW,
+        resources: ['*'],
+        actions: ['sagemaker:CreateEndpoint', 'sagemaker:CreateEndpointConfig'],
+        conditions: {
+          StringEquals: {
+            'aws:ResourceTag/DomainName': domainName,
+          },
+        },
+      });
+    };
+
+    const invokeEndPoint = (domainName: string) => {
+      return new PolicyStatement({
+        effect: Effect.ALLOW,
+        resources: ['*'],
+        actions: ['sagemaker:invokeEndPoint*'],
+        conditions: {
+          StringEquals: {
+            'aws:ResourceTag/DomainName': domainName,
+          },
+        },
+      });
+    };
     const describeOrDeleteJobs = (domainName: string) => {
       return new PolicyStatement({
         effect: Effect.ALLOW,
@@ -125,10 +143,13 @@ export class SageMakerExecutionRole extends Construct {
           'sagemaker:DescribeExperiment',
           'sagemaker:DescribeHyperParameterTuningJob',
           'sagemaker:DescribeInferenceExperiment',
+          'sagemaker:DescribeImageVersion',
           'sagemaker:DescribeModel',
           'sagemaker:GetModelPackageGroupPolicy',
+          'sagemaker:DescribeAppImageConfig',
           'sagemaker:DescribeModelPackage',
           'sagemaker:DescribeModelPackageGroup',
+          'sagemaker:DescribeModelCardExportJob',
           'sagemaker:DescribeModelQualityJobDefinition',
           'sagemaker:DescribeMonitoringSchedule',
           'sagemaker:DescribePipeline',
@@ -138,10 +159,14 @@ export class SageMakerExecutionRole extends Construct {
           'sagemaker:DescribeTrial',
           'sagemaker:DescribeTrialComponent',
           'sagemaker:DescribeArtifact',
+          'sagemaker:DescribeEndpoint',
+          'sagemaker:DescribeEndpointConfig',
           'sagemaker:ListModelCardExportJobs',
           'sagemaker:ListModelCardVersions',
           'sagemaker:ListModelPackages',
           'sagemaker:DeleteDataQualityJobDefinition',
+          'sagemaker:DeleteEndpoint',
+          'sagemaker:DeleteEndpointConfig',
           'sagemaker:DeleteExperiment',
           'sagemaker:DeleteInferenceExperiment',
           'sagemaker:DeleteModel',
@@ -166,31 +191,29 @@ export class SageMakerExecutionRole extends Construct {
       });
     };
 
-    const listAdditionalJobs = () => {
-      return new PolicyStatement({
-        effect: Effect.ALLOW,
-        resources: ['*'],
-        actions: [
-          'sagemaker:DescribePipelineDefinitionForExecution',
-          'sagemaker:ListDataQualityJobDefinitions',
-          'sagemaker:ListModelBiasJobDefinitions',
-          'sagemaker:ListModelCards',
-          'sagemaker:ListModelExplainabilityJobDefinitions',
-          'sagemaker:ListModelMetadata',
-          'sagemaker:ListModelPackageGroups',
-          'sagemaker:ListModelQualityJobDefinitions',
-          'sagemaker:ListModels',
-          'sagemaker:ListMonitoringSchedules',
-          'sagemaker:ListProcessingJobs',
-          'sagemaker:ListPipelineExecutionSteps',
-          'sagemaker:ListPipelineExecutions',
-          'sagemaker:ListTrainingJobs',
-          'sagemaker:ListTrialComponents',
-          'sagemaker:ListTrials',
-          'sagemaker:ListAssociations',
-        ],
-      });
-    };
+    const listAdditionalJobs = new PolicyStatement({
+      effect: Effect.ALLOW,
+      resources: ['*'],
+      actions: [
+        'sagemaker:DescribePipelineDefinitionForExecution',
+        'sagemaker:ListDataQualityJobDefinitions',
+        'sagemaker:ListModelBiasJobDefinitions',
+        'sagemaker:ListModelCards',
+        'sagemaker:ListModelExplainabilityJobDefinitions',
+        'sagemaker:ListModelMetadata',
+        'sagemaker:ListModelPackageGroups',
+        'sagemaker:ListModelQualityJobDefinitions',
+        'sagemaker:ListModels',
+        'sagemaker:ListMonitoringSchedules',
+        'sagemaker:ListProcessingJobs',
+        'sagemaker:ListPipelineExecutionSteps',
+        'sagemaker:ListPipelineExecutions',
+        'sagemaker:ListTrainingJobs',
+        'sagemaker:ListTrialComponents',
+        'sagemaker:ListTrials',
+        'sagemaker:ListAssociations',
+      ],
+    });
 
     const updateJobs = (domainName: string) => {
       return new PolicyStatement({
@@ -205,6 +228,7 @@ export class SageMakerExecutionRole extends Construct {
           'sagemaker:StopTrainingJob',
           'sagemaker:StopTransformJob',
           'sagemaker:UpdateExperiment',
+          'sagemaker:UpdateEndPoint',
           'sagemaker:UpdateInferenceExperiment',
           'sagemaker:UpdateModelCard',
           'sagemaker:UpdateModelPackage',
@@ -290,13 +314,16 @@ export class SageMakerExecutionRole extends Construct {
       sid: 'sagemakerS3ListBucketpolicy',
     });
 
-    const iamPassPolicy = new iam.PolicyStatement({
+    const sageMakerPassRolePolicy = new iam.PolicyStatement({
       actions: ['iam:PassRole'],
-      resources: ['*'],
+      resources: ['arn:aws:iam::*:role/*'],
       sid: 'sagemakerPassRolepolicy',
       conditions: {
-        StringEquals: {
-          'iam:PassedToService': 'sagemaker.amazonaws.com',
+        StringLike: {
+          'iam:PassedToService': [
+            'sagemaker.amazonaws.com',
+            'events.amazonaws.com',
+          ],
         },
       },
     });
@@ -361,26 +388,45 @@ export class SageMakerExecutionRole extends Construct {
 
     const notebookSchedulerPolicy = new iam.PolicyStatement({
       actions: [
+        'events:TagResource',
+        'events:DeleteRule',
         'events:PutTargets',
-        'events:RemoveTargets',
         'events:DescribeRule',
-        'events:EnableRule',
-        'events:DisableRule',
         'events:PutRule',
+        'events:RemoveTargets',
+        'events:DisableRule',
+        'events:EnableRule',
       ],
       resources: ['*'],
+      conditions: {
+        StringEquals: {
+          'aws:ResourceTag/sagemaker:is-scheduling-notebook-job': 'true',
+        },
+      },
       sid: 'notebookSchedulerPolicy',
     });
 
     const addTagsPolicy = new iam.PolicyStatement({
       actions: ['sagemaker:AddTags'],
+      //`arn:aws:sagemaker:${props.region}:${props.account}:*/*`
       resources: ['*'],
       conditions: {
         Null: {
           'sagemaker:TaggingAction': false,
         },
       },
-    })
+    });
+
+    const listTags = new iam.PolicyStatement({
+      effect: iam.Effect.ALLOW,
+      actions: ['sagemaker:ListTags'],
+      resources: [
+        'arn:aws:sagemaker:*:*:user-profile/*',
+        'arn:aws:sagemaker:*:*:space/*',
+        'arn:aws:sagemaker:*:*:training-job/*',
+        'arn:aws:sagemaker:*:*:pipeline/*',
+      ],
+    });
 
     executionRole.addToPolicy(cwLogsPolicy);
     executionRole.addToPolicy(createDeleteAppPolicy);
@@ -389,12 +435,12 @@ export class SageMakerExecutionRole extends Construct {
     );
     executionRole.addToPolicy(createAdditionalJobs(props.domainName));
     executionRole.addToPolicy(describeOrDeleteJobs(props.domainName));
-    executionRole.addToPolicy(listAdditionalJobs());
+    executionRole.addToPolicy(listAdditionalJobs);
     executionRole.addToPolicy(updateJobs(props.domainName));
     executionRole.addToPolicy(kmsPolicy);
     executionRole.addToPolicy(kmsListPolicy);
     executionRole.addToPolicy(ec2Policy);
-    executionRole.addToPolicy(iamPassPolicy);
+    executionRole.addToPolicy(sageMakerPassRolePolicy);
     executionRole.addToPolicy(denySageMakerPolicy);
     executionRole.addToPolicy(allowAssumeRoleOrganizationAccount);
     executionRole.addToPolicy(denyAssumeRoleSameAccount);
@@ -403,6 +449,9 @@ export class SageMakerExecutionRole extends Construct {
     executionRole.addToPolicy(s3AccessPolicy);
     executionRole.addToPolicy(s3ListPolicy);
     executionRole.addToPolicy(addTagsPolicy);
+    executionRole.addToPolicy(listTags);
+    executionRole.addToPolicy(creatEndPoint(props.domainName));
+    executionRole.addToPolicy(invokeEndPoint(props.domainName));
 
     this.executionRoleArn = executionRole.roleArn;
     this.executionRole = executionRole;
