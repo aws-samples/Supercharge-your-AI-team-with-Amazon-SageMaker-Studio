@@ -504,7 +504,7 @@ describe('LimitedPermissionUserProfile tests ', () => {
           {
             Action: 'sagemaker:AddTags',
             Effect: 'Allow',
-            Resource: '*',
+            Resource: 'arn:aws:sagemaker:eu-central-1:1111111111111:*/*',
             Condition: {
               Null: {
                 'sagemaker:TaggingAction': false,
