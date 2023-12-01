@@ -73,19 +73,36 @@ export class SagemakerDomain extends Construct {
       }
     );
 
-    const jupyterLabImageAccount = this.getJuypterLabHostingAccountByRegion(
-      props.region
-    );
+    const jupyterLabImageUrl = () => {
+      const jupyterlabImageAcct = this.getJuypterLabHostingAccountByRegion(
+        props.region
+      );
+      return `arn:aws:sagemaker:${props.region}:${jupyterlabImageAcct}:image/jupyter-server-3`;
+    };
 
     //Sagemaker Domain
     const sagemakerStudioDomain = new CfnDomain(this, 'SagemakerStudioDomain', {
       authMode: 'IAM',
+      defaultSpaceSettings: {
+        executionRole: sagemakerStudioRole.roleArn,
+        securityGroups: [sagemakerDomainSG.securityGroupId],
+        jupyterServerAppSettings: {
+          defaultResourceSpec: {
+            sageMakerImageArn: jupyterLabImageUrl(),
+          },
+        },
+        kernelGatewayAppSettings: {
+          defaultResourceSpec: {
+            instanceType: 'ml.t3.medium',
+          },
+        },
+      },
       defaultUserSettings: {
         executionRole: sagemakerStudioRole.roleArn,
         securityGroups: [sagemakerDomainSG.securityGroupId],
         jupyterServerAppSettings: {
           defaultResourceSpec: {
-            sageMakerImageArn: `arn:aws:sagemaker:${props.region}:${jupyterLabImageAccount}:image/jupyter-server-3`,
+            sageMakerImageArn: jupyterLabImageUrl(),
           },
         },
         kernelGatewayAppSettings: {

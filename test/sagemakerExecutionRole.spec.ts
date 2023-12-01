@@ -230,7 +230,8 @@ describe('LimitedPermissionUserProfile tests ', () => {
     });
   });
 
-  test('Tests checks sagemaker studio describe and delete actions', () => {
+  //Create
+  test('Tests checks sagemaker studio create actions', () => {
     const executionRole = new SageMakerExecutionRole(
       stack,
       'test-execution-role',
@@ -243,7 +244,6 @@ describe('LimitedPermissionUserProfile tests ', () => {
       }
     );
 
-    //Create
     Template.fromStack(stack).hasResourceProperties('AWS::IAM::Policy', {
       PolicyDocument: {
         Statement: Match.arrayWith([
@@ -254,6 +254,7 @@ describe('LimitedPermissionUserProfile tests ', () => {
               'sagemaker:DeleteApp',
               'sagemaker:CreateApp',
               'sagemaker:DescribeUserProfile',
+              'sagemaker:DescribeSpace',
               'sagemaker:DescribeStudioLifecycleConfig',
               'sagemaker:ListStudioLifecycleConfigs',
               'sagemaker:Search',
@@ -271,7 +272,6 @@ describe('LimitedPermissionUserProfile tests ', () => {
               'sagemaker:CreateProcessingJob',
               'sagemaker:CreateTrainingJob',
               'sagemaker:CreateTransformJob',
-              'sagemaker:CreateModel',
             ],
             Condition: {
               StringEquals: {
@@ -295,6 +295,7 @@ describe('LimitedPermissionUserProfile tests ', () => {
               'sagemaker:CreatePipeline',
               'sagemaker:CreateTrial',
               'sagemaker:CreateTrialComponent',
+              'sagemaker:CreateModel',
             ],
             Condition: {
               StringEquals: {
@@ -307,6 +308,20 @@ describe('LimitedPermissionUserProfile tests ', () => {
         ]),
       },
     });
+  });
+
+  test('Tests checks sagemaker studio describe and delete actions', () => {
+    const executionRole = new SageMakerExecutionRole(
+      stack,
+      'test-execution-role',
+      {
+        account: '1111111111111',
+        region: 'eu-central-1',
+        domainName: 'test',
+        kmsKey: encryptionkey,
+        dataBucketArn,
+      }
+    );
 
     //Delete, Describe actions
     Template.fromStack(stack).hasResourceProperties('AWS::IAM::Policy', {
@@ -319,10 +334,13 @@ describe('LimitedPermissionUserProfile tests ', () => {
               'sagemaker:DescribeExperiment',
               'sagemaker:DescribeHyperParameterTuningJob',
               'sagemaker:DescribeInferenceExperiment',
+              'sagemaker:DescribeImageVersion',
               'sagemaker:DescribeModel',
               'sagemaker:GetModelPackageGroupPolicy',
+              'sagemaker:DescribeAppImageConfig',
               'sagemaker:DescribeModelPackage',
               'sagemaker:DescribeModelPackageGroup',
+              'sagemaker:DescribeModelCardExportJob',
               'sagemaker:DescribeModelQualityJobDefinition',
               'sagemaker:DescribeMonitoringSchedule',
               'sagemaker:DescribePipeline',
@@ -332,10 +350,14 @@ describe('LimitedPermissionUserProfile tests ', () => {
               'sagemaker:DescribeTrial',
               'sagemaker:DescribeTrialComponent',
               'sagemaker:DescribeArtifact',
+              'sagemaker:DescribeEndpoint',
+              'sagemaker:DescribeEndpointConfig',
               'sagemaker:ListModelCardExportJobs',
               'sagemaker:ListModelCardVersions',
               'sagemaker:ListModelPackages',
               'sagemaker:DeleteDataQualityJobDefinition',
+              'sagemaker:DeleteEndpoint',
+              'sagemaker:DeleteEndpointConfig',
               'sagemaker:DeleteExperiment',
               'sagemaker:DeleteInferenceExperiment',
               'sagemaker:DeleteModel',
@@ -363,8 +385,22 @@ describe('LimitedPermissionUserProfile tests ', () => {
         ]),
       },
     });
+  });
 
-    //Update
+  //Update
+  test('Tests checks sagemaker studio update actions', () => {
+    const executionRole = new SageMakerExecutionRole(
+      stack,
+      'test-execution-role',
+      {
+        account: '1111111111111',
+        region: 'eu-central-1',
+        domainName: 'test',
+        kmsKey: encryptionkey,
+        dataBucketArn,
+      }
+    );
+
     Template.fromStack(stack).hasResourceProperties('AWS::IAM::Policy', {
       PolicyDocument: {
         Statement: Match.arrayWith([
@@ -378,6 +414,7 @@ describe('LimitedPermissionUserProfile tests ', () => {
               'sagemaker:StopTrainingJob',
               'sagemaker:StopTransformJob',
               'sagemaker:UpdateExperiment',
+              'sagemaker:UpdateEndPoint',
               'sagemaker:UpdateInferenceExperiment',
               'sagemaker:UpdateModelCard',
               'sagemaker:UpdateModelPackage',
@@ -401,8 +438,22 @@ describe('LimitedPermissionUserProfile tests ', () => {
         ]),
       },
     });
+  });
 
-    //List
+  //List
+  test('Tests checks sagemaker studio list actions', () => {
+    const executionRole = new SageMakerExecutionRole(
+      stack,
+      'test-execution-role',
+      {
+        account: '1111111111111',
+        region: 'eu-central-1',
+        domainName: 'test',
+        kmsKey: encryptionkey,
+        dataBucketArn,
+      }
+    );
+
     Template.fromStack(stack).hasResourceProperties('AWS::IAM::Policy', {
       PolicyDocument: {
         Statement: Match.arrayWith([
@@ -432,15 +483,28 @@ describe('LimitedPermissionUserProfile tests ', () => {
         ]),
       },
     });
+  });
 
-    //AddTags
+  //AddTags
+  test('Tests checks sagemaker studio add tags actions', () => {
+    const executionRole = new SageMakerExecutionRole(
+      stack,
+      'test-execution-role',
+      {
+        account: '1111111111111',
+        region: 'eu-central-1',
+        domainName: 'test',
+        kmsKey: encryptionkey,
+        dataBucketArn,
+      }
+    );
     Template.fromStack(stack).hasResourceProperties('AWS::IAM::Policy', {
       PolicyDocument: {
         Statement: Match.arrayWith([
           {
             Action: 'sagemaker:AddTags',
             Effect: 'Allow',
-            Resource: '*',
+            Resource: 'arn:aws:sagemaker:eu-central-1:1111111111111:*/*',
             Condition: {
               Null: {
                 'sagemaker:TaggingAction': false,

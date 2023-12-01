@@ -4,7 +4,7 @@ Amazon SageMaker Studio offers a comprehensive set of capabilities for machine l
 
 ## Pre-requisites
 
-- Ensure version of CDK is at least 2.102.x
+- Ensure version of CDK is at least 2.110.x
 
 ```console
   npm uninstall -g aws-cdk && npm install -g aws-cdk

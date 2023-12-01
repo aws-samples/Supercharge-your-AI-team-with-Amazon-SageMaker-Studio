@@ -1,5 +1,10 @@
 import { RemovalPolicy } from 'aws-cdk-lib';
-import { ArnPrincipal, Effect, PolicyDocument, PolicyStatement } from 'aws-cdk-lib/aws-iam';
+import {
+  ArnPrincipal,
+  Effect,
+  PolicyDocument,
+  PolicyStatement,
+} from 'aws-cdk-lib/aws-iam';
 import { Key } from 'aws-cdk-lib/aws-kms';
 import { Construct } from 'constructs';
 
@@ -45,11 +50,17 @@ export class SagemakerKmsKey extends Construct {
     });
   };
 
-  public updateKeyPolicy(roleArn: string) {
+  public grantAccessToUserRole(roleArn: string) {
     const arnPrincipal = new ArnPrincipal(roleArn);
     const policy = new PolicyStatement({
       effect: Effect.ALLOW,
-      actions: ['kms:Decrypt', 'kms:Encrypt', 'kms:ReEncrypt*', 'kms:GenerateDataKey*', 'kms:DescribeKey'],
+      actions: [
+        'kms:Decrypt',
+        'kms:Encrypt',
+        'kms:ReEncrypt*',
+        'kms:GenerateDataKey*',
+        'kms:DescribeKey',
+      ],
       resources: ['*'],
       principals: [arnPrincipal],
     });

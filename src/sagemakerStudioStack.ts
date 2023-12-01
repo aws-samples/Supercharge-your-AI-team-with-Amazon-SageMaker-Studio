@@ -113,7 +113,9 @@ export class SagemakerStudioStack extends cdk.Stack {
     });
 
     //Ensures key policy is updated to allow only Sagemaker execution role to perform encrypt decrypt action
-    sagemakerKms.updateKeyPolicy(sagemakerExecutionRole.getRole().roleArn);
+    sagemakerKms.grantAccessToUserRole(
+      sagemakerExecutionRole.getRole().roleArn
+    );
     this.cognitoGroupName = cognitoGroupName;
   }
 
